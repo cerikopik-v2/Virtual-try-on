@@ -22,7 +22,7 @@ const IdentificationModal: React.FC<Props> = ({ onIdentified }) => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ userId: userId.trim() }),
+        body: JSON.stringify({ userId: userId.trim().toLowerCase() }),
       });
 
       // Если сервер ответил успешно (пользователь найден)

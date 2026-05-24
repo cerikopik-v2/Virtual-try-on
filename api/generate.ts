@@ -1,4 +1,5 @@
-import { GoogleGenAI, Modality, HarmCategory, HarmBlockThreshold } from "@google/genai";
+// ---> ИЗМЕНЕНО: Импортируем Vertex AI и его настройки безопасности вместо старого @google/genai
+import { VertexAI, HarmCategory, HarmBlockThreshold } from "@google-cloud/vertexai";
 
 export const handler = async (event: any) => {
     if (event.httpMethod !== 'POST') {
@@ -35,11 +36,27 @@ export const handler = async (event: any) => {
         }
 
         // ==========================================
-        // 2. ПОДГОТОВКА ЗАПРОСА (ОРИГИНАЛЬНАЯ ЛОГИКА)
+        // 2. ИНИЦИАЛИЗАЦИЯ VERTEX AI
         // ==========================================
-        const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-        const model = 'gemini-3.1-flash-image-preview';
+        
+        // ---> ИЗМЕНЕНО: Достаем JSON-ключ из Netlify и инициализируем Vertex AI
+        const serviceAccountKey = JSON.parse(process.env.GCP_SERVICE_ACCOUNT_KEY || '{}');
 
+        const vertexAI = new VertexAI({
+            project: serviceAccountKey.project_id,
+            location: 'us-central1', // Базовый регион Google Cloud
+            googleAuthOptions: {
+                credentials: serviceAccountKey
+            }
+        });
+
+        const modelName = 'gemini-3.1-flash-image-preview';
+        const generativeModel = vertexAI.preview.getGenerativeModel({ model: modelName });
+
+        // ==========================================
+        // 3. ПОДГОТОВКА ЗАПРОСА (ОРИГИНАЛЬНАЯ ЛОГИКА)
+        // ==========================================
+        
         const imageParts: any[] = [];
         imageParts.push({ text: "[CHARACTER_REFERENCE]" });
 
@@ -256,23 +273,25 @@ CRUCIAL RULES (IN ORDER OF PRIORITY):
 4. COMPOSITION: Render in a 3:4 aspect ratio, showing the person in a medium shot (waist or mid-thigh up).`;
 
         // ==========================================
-        // 3. ГЕНЕРАЦИЯ ЧЕРЕЗ API
+        // 4. ГЕНЕРАЦИЯ ЧЕРЕЗ VERTEX API
         // ==========================================
-        const response = await ai.models.generateContent({
-            model,
-            contents: { parts: [...imageParts, { text: promptText }] },
-            config: {
-                responseModalities: [Modality.IMAGE],
-                safetySettings: [
-                    { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
-                    { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
-                    { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE },
-                    { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
-                ]
-            },
-        });
+        
+        // ---> ИЗМЕНЕНО: Формируем запрос в синтаксисе Vertex AI
+        const request = {
+            contents: [{ role: 'user', parts: [...imageParts, { text: promptText }] }],
+            safetySettings: [
+                { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
+                { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
+                { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE },
+                { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
+            ]
+        };
 
-        // Обработка ошибок в стиле оригинального handleApiResponse
+        // ---> ИЗМЕНЕНО: Выполняем вызов (в Vertex AI используется метод с возвратом потока, из которого мы берем response)
+        const streamingResp = await generativeModel.generateContent(request);
+        const response = await streamingResp.response;
+
+        // Обработка ошибок
         if (response.promptFeedback?.blockReason) {
             const { blockReason, blockReasonMessage } = response.promptFeedback;
             throw new Error(`Request was blocked. Reason: ${blockReason}. ${blockReasonMessage || ''}`);
@@ -296,7 +315,7 @@ CRUCIAL RULES (IN ORDER OF PRIORITY):
         }
 
         // ==========================================
-        // 4. УВЕЛИЧИВАЕМ СЧЕТЧИК ЛИМИТА
+        // 5. УВЕЛИЧИВАЕМ СЧЕТЧИК ЛИМИТА
         // ==========================================
         if (redisUrl && redisToken) {
             await fetch(`${redisUrl}/incr/user:${userId}:generations`, {

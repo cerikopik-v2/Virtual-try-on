@@ -29,6 +29,7 @@ const IdentificationModal: React.FC<Props> = ({ onIdentified }) => {
       if (response.ok) {
         const data = await response.json();
         if (data.exists) {
+          localStorage.setItem('userId', userId.trim().toLowerCase());
           setStatus('success');
         } else {
           setStatus('error');

@@ -1,18 +1,44 @@
 import React, { useState, useEffect } from 'react';
-import { CheckCircle2 } from 'lucide-react';
+import { CheckCircle2, Loader2 } from 'lucide-react';
 
 interface Props {
   onIdentified: () => void;
 }
 
 const IdentificationModal: React.FC<Props> = ({ onIdentified }) => {
+  // Добавили состояние 'loading' для ожидания ответа от сервера
   const [userId, setUserId] = useState('');
-  const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
 
-  const checkId = () => {
-    if (userId.toLowerCase() === 'hx28103') {
-      setStatus('success');
-    } else {
+  const checkId = async () => {
+    if (!userId.trim()) return;
+    
+    setStatus('loading');
+
+    try {
+      // Отправляем запрос на наш скрытый сервер Netlify
+      const response = await fetch('/.netlify/functions/verify', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId: userId.trim() }),
+      });
+
+      // Если сервер ответил успешно (пользователь найден)
+      if (response.ok) {
+        const data = await response.json();
+        if (data.exists) {
+          setStatus('success');
+        } else {
+          setStatus('error');
+        }
+      } else {
+        // Если сервер ответил ошибкой (например, 404 - не найден)
+        setStatus('error');
+      }
+    } catch (error) {
+      console.error('Ошибка при проверке пользователя:', error);
       setStatus('error');
     }
   };
@@ -75,16 +101,30 @@ const IdentificationModal: React.FC<Props> = ({ onIdentified }) => {
           <input 
             type="text" 
             placeholder="Введите ваш User ID" 
-            className="flex-grow px-4 py-3 sm:py-4 bg-gray-50 border-2 border-gray-200 rounded-xl focus:border-red-500 focus:bg-white focus:outline-none transition-all outline-none"
+            className="flex-grow px-4 py-3 sm:py-4 bg-gray-50 border-2 border-gray-200 rounded-xl focus:border-red-500 focus:bg-white focus:outline-none transition-all outline-none disabled:opacity-50"
             value={userId}
             onChange={(e) => setUserId(e.target.value)}
+            disabled={status === 'loading'}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') checkId();
+            }}
           />
           <button 
             onClick={checkId}
-            className="flex items-center justify-center gap-2 bg-[#b91c1c] hover:bg-[#991b1b] text-white font-bold py-3 sm:py-4 px-6 sm:px-8 rounded-xl shadow-lg transition-all uppercase tracking-wider text-sm sm:text-base"
+            disabled={status === 'loading' || !userId.trim()}
+            className="flex items-center justify-center gap-2 bg-[#b91c1c] hover:bg-[#991b1b] disabled:bg-gray-400 text-white font-bold py-3 sm:py-4 px-6 sm:px-8 rounded-xl shadow-lg transition-all uppercase tracking-wider text-sm sm:text-base min-w-[160px]"
           >
-            <CheckCircle2 className="w-5 h-5" />
-            ПРОВЕРИТЬ
+            {status === 'loading' ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin" />
+                ПРОВЕРКА...
+              </>
+            ) : (
+              <>
+                <CheckCircle2 className="w-5 h-5" />
+                ПРОВЕРИТЬ
+              </>
+            )}
           </button>
         </div>
       </div>

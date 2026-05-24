@@ -44,7 +44,7 @@ export const handler = async (event: any) => {
 
         const vertexAI = new VertexAI({
             project: serviceAccountKey.project_id,
-            location: 'us-central1', // Базовый регион Google Cloud
+            location: 'global', // Для nano banana 2
             googleAuthOptions: {
                 credentials: serviceAccountKey
             }

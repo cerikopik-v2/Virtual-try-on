@@ -1,4 +1,4 @@
-import { GoogleGenAI, HarmCategory, HarmBlockThreshold } from "@google/genai";
+import { GoogleGenAI } from "@google/genai";
 import * as fs from 'fs';
 
 export const handler = async (event: any) => {
@@ -17,7 +17,6 @@ export const handler = async (event: any) => {
         // ==========================================
         const keyStringRaw = process.env.GCP_SERVICE_ACCOUNT_KEY || '{}';
         
-        // Умный парсинг: очищаем от лишних кавычек, если Netlify их добавил
         let cleanKeyString = keyStringRaw;
         if (cleanKeyString.startsWith('"') && cleanKeyString.endsWith('"')) {
             cleanKeyString = cleanKeyString.substring(1, cleanKeyString.length - 1).replace(/\\"/g, '"');
@@ -26,7 +25,6 @@ export const handler = async (event: any) => {
         let serviceAccountKey: any = {};
         try {
             serviceAccountKey = JSON.parse(cleanKeyString);
-            // Если Netlify сохранил JSON дважды строкой
             if (typeof serviceAccountKey === 'string') {
                 serviceAccountKey = JSON.parse(serviceAccountKey);
             }
@@ -34,20 +32,17 @@ export const handler = async (event: any) => {
             console.error("Ошибка парсинга ключа GCP, проверьте переменную в Netlify.");
         }
 
-        // Используем 100% рабочий запасной вариант ID проекта на случай ошибки парсинга
         const projectId = serviceAccountKey.project_id || 'gemini-01-492817';
 
-        // Создаем временный файл авторизации
         const keyPath = '/tmp/gcp-key.json';
         fs.writeFileSync(keyPath, JSON.stringify(serviceAccountKey));
         process.env.GOOGLE_APPLICATION_CREDENTIALS = keyPath;
 
-        // Инициализация легкого SDK для анализа фото на глобальном эндпоинте Vertex
+        // === ИСПРАВЛЕННАЯ АВТОРИЗАЦИЯ СТРОГО ПО ДОКУМЕНТАЦИИ ===
         const ai = new GoogleGenAI({
-            vertexai: {
-                project: projectId,
-                location: 'global'
-            }
+            vertexai: true,
+            project: projectId,
+            location: 'global'
         });
 
         // ==========================================
@@ -77,13 +72,13 @@ export const handler = async (event: any) => {
 
         const response = await ai.models.generateContent({
             model: 'gemini-2.5-flash',
-            contents: { parts: [imagePart, { text: promptText }] },
+            contents: [imagePart, { text: promptText }],
             config: {
                 safetySettings: [
-                    { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
-                    { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
-                    { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE },
-                    { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
+                    { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
+                    { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
+                    { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
+                    { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" },
                 ]
             }
         });

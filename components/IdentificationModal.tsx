@@ -87,15 +87,14 @@ const IdentificationModal: React.FC<Props> = ({ onIdentified }) => {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center py-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
-      <div className="bg-white rounded-2xl shadow-2xl p-6 sm:p-10 max-w-xl w-full mx-4 transform transition-all my-auto max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-2xl shadow-2xl p-6 sm:p-10 max-w-xl w-full mx-4 transform transition-all my-auto max-h-[85vh] overflow-y-auto">
         <h2 className="text-xl sm:text-3xl font-black uppercase tracking-wider text-gray-900 mb-4 sm:mb-6">ВНИМАНИЕ</h2>
         <div className="space-y-3 sm:space-y-4 text-sm sm:text-base text-gray-700 leading-relaxed mb-6 sm:mb-8">
-          <p>Для использования нашего сервиса, вам необходимо идентифицировать себя.</p>
-          <p>Это сделано в целях ограничения попыток генераций, поскольку они не бесплатны, мы вынуждены ограничить количество генераций до трех штук на одного пользователя.</p>
-          <p>Для идентификации, пожалуйста, введите в поле ниже ваш user ID, например (h23045, b98432, n073672).</p>
+          <p>Для использования нашего сервиса, вам необходимо идентифицировать себя, это сделано в целях ограничения попыток генераций на одного пользователя.</p>
+          <p>Для идентификации, пожалуйста, введите в поле ниже ваш user ID, например (b123456).</p>
           <p>Для успешного прохождения проверки, вы также должны быть подписчиком нашего корпоративного портала "Бурсервис-LIFE".</p>
           <p>Если вы не являетесь подписчиком, просто перейдите по <a href="https://life.burservis.ru/" target="_blank" rel="noreferrer" className="text-[#b91c1c] font-bold underline hover:text-[#991b1b] transition-colors">ССЫЛКЕ</a> на сайт и авторизуйтесь. Затем вернитесь к этому окну.</p>
-          <p className="text-[#b91c1c] font-semibold">Пожалуйста, используйте только свой user ID!</p>
+          <p className="text-[#b91c1c] font-semibold">Проверка по имени пользователя, это максимум что можем сделать. Пожалуйста, используйте только свой user ID!</p>
         </div>
         
         <div className="flex flex-col sm:flex-row gap-3">

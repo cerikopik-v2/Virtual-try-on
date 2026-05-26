@@ -129,17 +129,19 @@ const StartScreen: React.FC<Props> = ({ userImageUrl, onUpload, onProceed, onRes
              {errorMsg && (
                  <p className="text-red-500 text-sm mb-6">{errorMsg}</p>
              )}
-             <div className="bg-gray-50 border border-gray-200 rounded-xl p-5 mb-6 text-xs text-gray-700 leading-relaxed shadow-sm max-w-md">
-                <h3 className="font-bold mb-2 text-gray-900">Рекомендации к фото:</h3>
-                <ul className="list-disc pl-5 space-y-1 mb-4">
-                  <li>Портрет по пояс или крупнее. Не в полный рост!</li>
-                  <li>Лицо четко видно, взгляд прямо (анфас), глаза открыты.</li>
-                  <li>Один человек в кадре.</li>
-                  <li>Высокое качество, без размытия и сильных фильтров.</li>
-                </ul>
-             </div>
            </>
         )}
+
+        {/* Блок вынесен из условий и теперь отображается ВСЕГДА в одном и том же месте */}
+        <div className="bg-gray-50 border border-gray-200 rounded-xl p-5 mb-6 text-xs text-gray-700 leading-relaxed shadow-sm max-w-md mx-auto md:mx-0">
+           <h3 className="font-bold mb-2 text-gray-900">Рекомендации к фото:</h3>
+           <ul className="list-disc pl-5 space-y-1 mb-4">
+             <li>Портрет по пояс или крупнее. Не в полный рост!</li>
+             <li>Лицо четко видно, взгляд прямо (анфас), глаза открыты.</li>
+             <li>Один человек в кадре.</li>
+             <li>Высокое качество, без размытия и сильных фильтров.</li>
+           </ul>
+        </div>
       </div>
 
       {/* Right side */}

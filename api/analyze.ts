@@ -1,4 +1,5 @@
-import { VertexAI, HarmCategory, HarmBlockThreshold } from "@google-cloud/vertexai";
+import { GoogleGenAI, HarmCategory, HarmBlockThreshold } from "@google/genai";
+import * as fs from 'fs';
 
 export const handler = async (event: any) => {
     if (event.httpMethod !== 'POST') {
@@ -11,16 +12,21 @@ export const handler = async (event: any) => {
             return { statusCode: 400, body: JSON.stringify({ error: 'Missing image' }) };
         }
 
-        // Подключаемся к Vertex AI
-        const serviceAccountKey = JSON.parse(process.env.GCP_SERVICE_ACCOUNT_KEY || '{}');
-        const vertexAI = new VertexAI({
-            project: serviceAccountKey.project_id,
-            location: 'global',
-            googleAuthOptions: { credentials: serviceAccountKey }
-        });
+        // Настройка авторизации через сервисный аккаунт
+        const keyString = process.env.GCP_SERVICE_ACCOUNT_KEY || '{}';
+        const serviceAccountKey = JSON.parse(keyString);
 
-        // Используем 2.5-flash, она отлично и быстро анализирует картинки
-        const generativeModel = vertexAI.preview.getGenerativeModel({ model: 'gemini-2.5-flash' });
+        const keyPath = '/tmp/gcp-key.json';
+        fs.writeFileSync(keyPath, keyString);
+        process.env.GOOGLE_APPLICATION_CREDENTIALS = keyPath;
+
+        // Инициализация легкого SDK для анализа фото на глобальном эндпоинте Vertex
+        const ai = new GoogleGenAI({
+            vertexai: {
+                project: serviceAccountKey.project_id,
+                location: 'global'
+            }
+        });
 
         const match = image.match(/data:(.*?);base64,(.*)/);
         if (!match) throw new Error("Invalid image format");
@@ -44,20 +50,20 @@ export const handler = async (event: any) => {
   "qualityMessage": "короткий комментарий на русском описывающий главную причину оценки" 
 }`;
 
-        const request = {
-            contents: [{ role: 'user', parts: [imagePart, { text: promptText }] }],
-            safetySettings: [
-                { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
-                { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
-                { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE },
-                { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
-            ]
-        };
-
-        const streamingResp = await generativeModel.generateContent(request);
-        const response = await streamingResp.response;
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: { parts: [imagePart, { text: promptText }] },
+            config: {
+                safetySettings: [
+                    { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
+                    { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
+                    { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE },
+                    { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
+                ]
+            }
+        });
         
-        let text = response.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
+        let text = response.text?.trim() || "";
 
         if (text.startsWith("```json")) {
             text = text.replace(/^```json\n/, "").replace(/\n```$/, "");
@@ -72,7 +78,6 @@ export const handler = async (event: any) => {
         console.error("Analyze error:", error);
         return { 
             statusCode: 500, 
-            // Fallback, если сервер упал, чтобы не блокировать пользователя полностью
             body: JSON.stringify({ isAllowed: true, score: 7, qualityMessage: "Фото приемлемо (серверная проверка пропущена)" }) 
         };
     }

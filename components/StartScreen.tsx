@@ -151,8 +151,8 @@ const StartScreen: React.FC<Props> = ({ userImageUrl, onUpload, onProceed, onRes
              <div className="absolute top-4 left-4 z-10 bg-white/80 px-2 py-1 rounded text-xs text-gray-500 font-mono">Фото до</div>
              <div className="absolute top-4 right-4 z-10 bg-white/80 px-2 py-1 rounded text-xs text-gray-500 font-mono">Фото после</div>
               <Compare 
-                firstImage="https://storage.googleapis.com/gemini-95-icons/asr-tryon.jpg"
-                secondImage="https://storage.googleapis.com/gemini-95-icons/asr-tryon-model.png"
+                firstImage="https://raw.githubusercontent.com/cerikopik-v2/tryon-v2-asset/refs/heads/main/before.jpg"
+                secondImage="https://raw.githubusercontent.com/cerikopik-v2/tryon-v2-asset/refs/heads/main/after.jpg"
                 className="w-full h-full"
                 slideMode="drag"
               />

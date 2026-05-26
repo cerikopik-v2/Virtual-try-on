@@ -61,7 +61,7 @@ const StartScreen: React.FC<Props> = ({ userImageUrl, onUpload, onProceed, onRes
       
       {/* Left side */}
       <div className={`flex-1 flex flex-col justify-center ${userImageUrl ? 'order-2 md:order-1' : ''}`}>
-        <h1 className={`text-[1.8rem] sm:text-4xl md:text-5xl font-[800] uppercase tracking-tight leading-none mb-4 whitespace-nowrap text-center md:text-left ${userImageUrl ? 'hidden md:block' : ''}`}>В СТИЛЕ БУРСЕРВИС</h1>
+        <h1 className={`text-[1.8rem] sm:text-4xl md:text-5xl font-[800] uppercase tracking-tight leading-none mb-2 md:mb-4 whitespace-nowrap text-center md:text-left ${userImageUrl ? 'hidden md:block' : ''}`}>В СТИЛЕ БУРСЕРВИС</h1>
         <h2 className={`text-xl md:text-2xl font-medium text-gray-500 mb-10 text-center md:text-left ${userImageUrl ? 'hidden md:block' : ''}`}>Виртуальная примерочная</h2>
 
         {!userImageUrl ? (

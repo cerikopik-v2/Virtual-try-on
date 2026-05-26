@@ -1,5 +1,5 @@
-// ---> ИЗМЕНЕНО: Импортируем Vertex AI и его настройки безопасности вместо старого @google/genai
-import { VertexAI, HarmCategory, HarmBlockThreshold } from "@google-cloud/vertexai";
+import { GoogleGenAI, Modality, HarmCategory, HarmBlockThreshold } from "@google/genai";
+import * as fs from 'fs';
 
 export const handler = async (event: any) => {
     if (event.httpMethod !== 'POST') {
@@ -36,23 +36,24 @@ export const handler = async (event: any) => {
         }
 
         // ==========================================
-        // 2. ИНИЦИАЛИЗАЦИЯ VERTEX AI
+        // 2. ИНИЦИАЛИЗАЦИЯ VERTEX AI ЧЕРЕЗ СЕРВИСНЫЙ АККАУНТ
         // ==========================================
-        
-        // ---> ИЗМЕНЕНО: Достаем JSON-ключ из Netlify и инициализируем Vertex AI
-        const serviceAccountKey = JSON.parse(process.env.GCP_SERVICE_ACCOUNT_KEY || '{}');
+        const keyString = process.env.GCP_SERVICE_ACCOUNT_KEY || '{}';
+        const serviceAccountKey = JSON.parse(keyString);
 
-        const vertexAI = new VertexAI({
-            project: serviceAccountKey.project_id,
-            location: 'global', // Для nano banana 2
-            googleAuthOptions: {
-                credentials: serviceAccountKey
+        // Создаем временный файл авторизации для корректной работы внутри Netlify
+        const keyPath = '/tmp/gcp-key.json';
+        fs.writeFileSync(keyPath, keyString);
+        process.env.GOOGLE_APPLICATION_CREDENTIALS = keyPath;
+
+        // Инициализируем легкий SDK для работы через Vertex AI в глобальном регионе
+        const ai = new GoogleGenAI({
+            vertexai: {
+                project: serviceAccountKey.project_id,
+                location: 'global'
             }
         });
-
-        const modelName = 'gemini-3.1-flash-image-preview';
-        const generativeModel = vertexAI.preview.getGenerativeModel({ model: modelName });
-
+        const model = 'gemini-3.1-flash-image-preview';
         // ==========================================
         // 3. ПОДГОТОВКА ЗАПРОСА (ОРИГИНАЛЬНАЯ ЛОГИКА)
         // ==========================================
@@ -273,25 +274,22 @@ CRUCIAL RULES (IN ORDER OF PRIORITY):
 4. COMPOSITION: Render in a 3:4 aspect ratio, showing the person in a medium shot (waist or mid-thigh up).`;
 
         // ==========================================
-        // 4. ГЕНЕРАЦИЯ ЧЕРЕЗ VERTEX API
+        // 4. ГЕНЕРАЦИЯ ЧЕРЕЗ СОВРЕМЕННЫЙ SDK
         // ==========================================
-        
-        // ---> ИЗМЕНЕНО: Формируем запрос в синтаксисе Vertex AI
-        const request = {
-            contents: [{ role: 'user', parts: [...imageParts, { text: promptText }] }],
-            safetySettings: [
-                { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
-                { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
-                { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE },
-                { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
-            ]
-        };
+        const response = await ai.models.generateContent({
+            model,
+            contents: { parts: [...imageParts, { text: promptText }] },
+            config: {
+                responseModalities: [Modality.IMAGE],
+                safetySettings: [
+                    { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
+                    { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
+                    { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE },
+                    { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
+                ]
+            },
+        });
 
-        // ---> ИЗМЕНЕНО: Выполняем вызов (в Vertex AI используется метод с возвратом потока, из которого мы берем response)
-        const streamingResp = await generativeModel.generateContent(request);
-        const response = await streamingResp.response;
-
-        // Обработка ошибок
         if (response.promptFeedback?.blockReason) {
             const { blockReason, blockReasonMessage } = response.promptFeedback;
             throw new Error(`Request was blocked. Reason: ${blockReason}. ${blockReasonMessage || ''}`);
@@ -309,7 +307,7 @@ CRUCIAL RULES (IN ORDER OF PRIORITY):
         if (!finalImage) {
             const finishReason = response.candidates?.[0]?.finishReason;
             if (finishReason && finishReason !== 'STOP') {
-                throw new Error(`Image generation stopped unexpectedly.\nReason: ${finishReason}. This often relates to safety settings.`);
+                throw new Error(`Image generation stopped unexpectedly.\nReason: ${finishReason}.`);
             }
             throw new Error(`The AI model did not return an image.`);
         }

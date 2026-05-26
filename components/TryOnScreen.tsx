@@ -108,13 +108,17 @@ const TryOnScreen: React.FC<Props> = ({ userImageFile, userImageUrl, selection, 
          onLog: (msg: string) => setGenerationLogs(msg),
        };
 
-       const resultUrl = await generateVirtualTryOnImage(userImageFile, options);
+      const resultUrl = await generateVirtualTryOnImage(userImageFile, options);
        if (!abortControllerRef.current.signal.aborted) {
           onGenerateFinish(resultUrl);
        }
     } catch (err: any) {
        if (!abortControllerRef.current?.signal.aborted) {
-          setError(err.message || 'Ошибка генерации');
+          if (err.message === 'LIMIT_EXCEEDED') {
+             setError('Превышен лимит! Вы израсходовали свои генерации.');
+          } else {
+             setError(err.message || 'Ошибка генерации');
+          }
        }
     } finally {
        if (abortControllerRef.current && !abortControllerRef.current.signal.aborted) {

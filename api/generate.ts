@@ -36,20 +36,39 @@ export const handler = async (event: any) => {
         }
 
         // ==========================================
-        // 2. ИНИЦИАЛИЗАЦИЯ VERTEX AI ЧЕРЕЗ СЕРВИСНЫЙ АККАУНТ
+        // ИНИЦИАЛИЗАЦИЯ VERTEX AI ЧЕРЕЗ СЕРВИСНЫЙ АККАУНТ
         // ==========================================
-        const keyString = process.env.GCP_SERVICE_ACCOUNT_KEY || '{}';
-        const serviceAccountKey = JSON.parse(keyString);
+        const keyStringRaw = process.env.GCP_SERVICE_ACCOUNT_KEY || '{}';
+        
+        // Умный парсинг: очищаем от лишних кавычек, если Netlify их добавил
+        let cleanKeyString = keyStringRaw;
+        if (cleanKeyString.startsWith('"') && cleanKeyString.endsWith('"')) {
+            cleanKeyString = cleanKeyString.substring(1, cleanKeyString.length - 1).replace(/\\"/g, '"');
+        }
 
-        // Создаем временный файл авторизации для корректной работы внутри Netlify
+        let serviceAccountKey: any = {};
+        try {
+            serviceAccountKey = JSON.parse(cleanKeyString);
+            // Если Netlify сохранил JSON дважды строкой
+            if (typeof serviceAccountKey === 'string') {
+                serviceAccountKey = JSON.parse(serviceAccountKey);
+            }
+        } catch (e) {
+            console.error("Ошибка парсинга ключа GCP, проверьте переменную в Netlify.");
+        }
+
+        // Я нашел твой ID проекта в старых логах, используем его как 100% запасной вариант!
+        const projectId = serviceAccountKey.project_id || 'gemini-01-492817';
+
+        // Создаем временный файл авторизации
         const keyPath = '/tmp/gcp-key.json';
-        fs.writeFileSync(keyPath, keyString);
+        fs.writeFileSync(keyPath, JSON.stringify(serviceAccountKey));
         process.env.GOOGLE_APPLICATION_CREDENTIALS = keyPath;
 
-        // Инициализируем легкий SDK для работы через Vertex AI в глобальном регионе
+        // Инициализируем SDK
         const ai = new GoogleGenAI({
             vertexai: {
-                project: serviceAccountKey.project_id,
+                project: projectId,
                 location: 'global'
             }
         });

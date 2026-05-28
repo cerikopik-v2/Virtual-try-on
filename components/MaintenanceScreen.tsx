@@ -12,7 +12,7 @@ const MaintenanceScreen: React.FC = () => {
           </div>
           <h2 className="text-2xl font-bold text-gray-900 mb-3">МЫ ЗАКРЫТЫ</h2>
           <p className="text-gray-600 mb-2 leading-relaxed">
-             Приложение было доступно до 10 Июня 2026, и в настоящее время закрыто. <br><br>Есть вопросы или предложения? Пишите: life@burservis.ru
+             Приложение было доступно до 10 Июня 2026, и в настоящее время закрыто. <br /><br />Есть вопросы или предложения? Пишите: life@burservis.ru
           </p>
           <p className="text-sm text-gray-500 mt-6">
             Спасибо за проявленный интерес.

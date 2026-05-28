@@ -20,7 +20,7 @@ const IdentificationModal: React.FC<Props> = ({ isAuthorized, onAccept }) => {
             Прямой доступ по ссылке невозможен в целях безопасности.
           </p>
           <a 
-            href="https://life.burservis.ru/" 
+            href="https://life.burservis.ru/virtual-try-on/" 
             target="_blank" 
             rel="noreferrer" 
             className="inline-flex justify-center flex items-center gap-2 w-full bg-[#b91c1c] hover:bg-[#991b1b] text-white font-bold py-4 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all uppercase tracking-wider text-sm sm:text-base"

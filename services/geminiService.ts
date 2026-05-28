@@ -15,12 +15,14 @@ const fileToPart = async (file: File, maxSize?: number) => {
                 let width = img.width;
                 let height = img.height;
                 
-                // Пропорциональное сжатие
+                // Пропорциональное изменение размеров, ТОЛЬКО если картинка БОЛЬШЕ лимита
                 if (width > maxSize || height > maxSize) {
                     const ratio = Math.min(maxSize / width, maxSize / height);
                     width *= ratio;
                     height *= ratio;
                 }
+                // Если картинка меньше maxSize по пикселям, мы СОХРАНЯЕМ её оригинальный размер,
+                // но всё равно пускаем на canvas, чтобы уменьшить физический ВЕС (сжать байты)!
    
                 const canvas = document.createElement('canvas');
                 canvas.width = width;
@@ -29,8 +31,8 @@ const fileToPart = async (file: File, maxSize?: number) => {
                 if (!ctx) return reject(new Error("Canvas not supported"));
        
                 ctx.drawImage(img, 0, 0, width, height);
-                // Качество 0.82 дает отличную картинку весом около 150-300 КБ, что идеально пролетает через прокси
-                const resizedDataUrl = canvas.toDataURL('image/jpeg', 0.82);
+                // Качество 0.80 гарантирует, что даже детализированный файл ужмется до ~100-200 КБ
+                const resizedDataUrl = canvas.toDataURL('image/jpeg', 0.80);
                 const { mimeType, data } = dataUrlToParts(resizedDataUrl);
                 resolve({ inlineData: { mimeType, data } });
             };
@@ -122,9 +124,7 @@ export const generateVirtualTryOnImage = async (
             throw new Error("Пользователь не идентифицирован. Пожалуйста, обновите страницу и пройдите проверку заново.");
         }
 
-        // КРИТИЧЕСКОЕ ИЗМЕНЕНИЕ: Сжимаем до 800px по большей стороне.
-        // Вес Base64 гарантированно упадет до ~100-150 КБ.
-        // Скорость работы вырастет в 3 раза, лимиты Netlify не будут нарушены.
+        // Оптимальное сжатие до 800px. Принудительно сожмет ВЕС любого файла.
         const userImagePart = await fileToPart(userImage, 800) as any;
         const base64Image = `data:${userImagePart.inlineData.mimeType};base64,${userImagePart.inlineData.data}`;
 

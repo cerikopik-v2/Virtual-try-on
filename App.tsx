@@ -54,6 +54,7 @@ const App: React.FC = () => {
 
           if (hashHex === urlSign) {
             localStorage.setItem('userId', urlUid);
+            localStorage.setItem('userSign', urlSign);
             setIsAuthorized(true);
             // === ПРОВЕРКА ЛИМИТА В REDIS НА СТАРТЕ ===
             try {

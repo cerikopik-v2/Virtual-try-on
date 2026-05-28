@@ -4,6 +4,7 @@ import StartScreen from './components/StartScreen';
 import TryOnScreen from './components/TryOnScreen';
 import PostTryOnScreen from './components/PostTryOnScreen';
 import MaintenanceScreen from './components/MaintenanceScreen';
+import LimitExceededScreen from './components/LimitExceededScreen';
 import { SelectionState } from './types';
 import { DEFAULT_SELECTION } from './constants';
 
@@ -26,6 +27,7 @@ const App: React.FC = () => {
 
   const [currentView, setCurrentView] = useState<AppView>('start');
   const [autoStartGeneration, setAutoStartGeneration] = useState(false);
+  const [isLimitExceeded, setIsLimitExceeded] = useState(false);
   
   // App State
   const [userImageFile, setUserImageFile] = useState<File | null>(null);
@@ -130,6 +132,11 @@ const App: React.FC = () => {
   if (isMaintenanceMode) {
     // Если 1, рисуем ТОЛЬКО заглушку. Весь интерфейс ниже будет проигнорирован.
     return <MaintenanceScreen />;
+  }
+
+  if (isLimitExceeded) {
+    // Если лимит исчерпан, рисуем ТОЛЬКО заглушку лимита.
+    return <LimitExceededScreen />;
   }
   
   return (

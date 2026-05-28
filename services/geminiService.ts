@@ -32,7 +32,7 @@ const fileToPart = async (file: File, maxSize?: number) => {
        
                 ctx.drawImage(img, 0, 0, width, height);
                 // Качество 0.80 гарантирует, что даже детализированный файл ужмется до ~100-200 КБ
-                const resizedDataUrl = canvas.toDataURL('image/jpeg', 0.80);
+                const resizedDataUrl = canvas.toDataURL('image/jpeg', 0.90);
                 const { mimeType, data } = dataUrlToParts(resizedDataUrl);
                 resolve({ inlineData: { mimeType, data } });
             };
@@ -125,7 +125,7 @@ export const generateVirtualTryOnImage = async (
         }
 
         // Оптимальное сжатие до 800px. Принудительно сожмет ВЕС любого файла.
-        const userImagePart = await fileToPart(userImage, 800) as any;
+        const userImagePart = await fileToPart(userImage, 1200) as any;
         const base64Image = `data:${userImagePart.inlineData.mimeType};base64,${userImagePart.inlineData.data}`;
 
         addLog("Отправка данных на защищенный сервер Netlify... (Размер оптимизирован)");

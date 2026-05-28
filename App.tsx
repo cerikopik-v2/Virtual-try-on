@@ -3,6 +3,7 @@ import IdentificationModal from './components/IdentificationModal';
 import StartScreen from './components/StartScreen';
 import TryOnScreen from './components/TryOnScreen';
 import PostTryOnScreen from './components/PostTryOnScreen';
+import MaintenanceScreen from './components/MaintenanceScreen';
 import { SelectionState } from './types';
 import { DEFAULT_SELECTION } from './constants';
 
@@ -104,6 +105,14 @@ const App: React.FC = () => {
     setCurrentView('tryon');
   };
 
+  // Считываем переменную из окружения Vite (0 - работает, 1 - закрыто)
+  const isMaintenanceMode = import.meta.env.VITE_MAINTENANCE_MODE === '1';
+
+  if (isMaintenanceMode) {
+    // Если 1, рисуем ТОЛЬКО заглушку. Весь интерфейс ниже будет проигнорирован.
+    return <MaintenanceScreen />;
+  }
+  
   return (
     <div className="font-sans bg-gray-50 text-gray-900 min-h-[100dvh] flex flex-col py-4 md:py-8 px-2 md:px-0">
       

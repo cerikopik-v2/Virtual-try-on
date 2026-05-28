@@ -1,11 +1,9 @@
 export const handler = async (event: any) => {
-  // В Netlify метод проверяется через event.httpMethod
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: JSON.stringify({ error: 'Method Not Allowed' }) };
   }
 
   try {
-    // В Netlify тело запроса нужно парсить из строки event.body
     const body = JSON.parse(event.body || '{}');
     const userId = body.userId;
 
@@ -13,45 +11,33 @@ export const handler = async (event: any) => {
       return { statusCode: 400, body: JSON.stringify({ error: 'User ID is required' }) };
     }
 
-    const wpUser = process.env.WP_USERNAME;
-    const wpPass = process.env.WP_APP_PASSWORD;
-    const wpUrl = 'https://life.burservis.ru';
+    // Подключаемся к Upstash Redis
+    const redisUrl = process.env.UPSTASH_REDIS_REST_URL;
+    const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN;
 
-    // Кодируем логин и пароль администратора
-    const credentials = Buffer.from(`${wpUser}:${wpPass}`).toString('base64');
-    
-    // ПРИНУДИТЕЛЬНО переводим введенный пользователем ID в нижний регистр 
-    // (в базе WordPress логины для поиска 'slug' хранятся маленькими буквами)
-    const safeUserId = userId.toLowerCase();
+    if (!redisUrl || !redisToken) {
+        // Если ключей нет, пропускаем (чтобы не сломать приложение)
+        return { statusCode: 200, body: JSON.stringify({ generationsCount: 0 }) };
+    }
 
-    // Запрашиваем пользователя из WP
-    const response = await fetch(`${wpUrl}/wp-json/wp/v2/users?slug=${encodeURIComponent(safeUserId)}`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Basic ${credentials}`,
-        'Content-Type': 'application/json'
-      }
+    // Стучимся в базу за количеством попыток
+    const limitRes = await fetch(`${redisUrl}/get/user:${userId}:generations`, {
+        headers: { Authorization: `Bearer ${redisToken}` }
     });
+    
+    const limitData = await limitRes.json();
+    
+    // Превращаем ответ в число (если пусто, то 0)
+    const generations = parseInt(limitData.result || '0');
 
-    if (!response.ok) {
-      return { statusCode: response.status, body: JSON.stringify({ error: 'WP API Error' }) };
-    }
-
-    const users = await response.json();
-
-    // Если массив пустой, значит пользователь не найден
-    if (!users || users.length === 0) {
-      return { statusCode: 404, body: JSON.stringify({ exists: false }) };
-    }
-
-    // Если нашли — возвращаем успешный статус!
+    // Отдаем на фронтенд
     return { 
       statusCode: 200, 
-      body: JSON.stringify({ exists: true, user: users[0].slug }) 
+      body: JSON.stringify({ generationsCount: generations }) 
     };
 
   } catch (error) {
-    console.error('Ошибка сервера Netlify:', error);
+    console.error('Ошибка проверки лимита в Redis:', error);
     return { statusCode: 500, body: JSON.stringify({ error: 'Internal Server Error' }) };
   }
 };

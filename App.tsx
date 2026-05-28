@@ -53,6 +53,25 @@ const App: React.FC = () => {
           if (hashHex === urlSign) {
             localStorage.setItem('userId', urlUid);
             setIsAuthorized(true);
+            // === ПРОВЕРКА ЛИМИТА В REDIS НА СТАРТЕ ===
+            try {
+              const verifyResponse = await fetch('/api/verify', {
+                method: 'POST',
+                body: JSON.stringify({ userId: urlUid })
+              });
+              
+              if (verifyResponse.ok) {
+                const data = await verifyResponse.json();
+                
+                // Если юзер исчерпал свои 3 попытки — включаем заглушку
+                if (data.generationsCount >= 3) {
+                  setIsLimitExceeded(true);
+                }
+              }
+            } catch (err) {
+              console.error('Ошибка проверки лимита:', err);
+            }
+            // === КОНЕЦ БЛОКА ПРОВЕРКИ ===
             window.history.replaceState({}, document.title, window.location.pathname);
           }
         } catch (error) {

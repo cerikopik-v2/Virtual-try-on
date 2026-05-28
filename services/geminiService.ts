@@ -82,7 +82,7 @@ export const analyzePhoto = async (file: File): Promise<PhotoAnalysisResult> => 
         return await response.json();
     } catch (error) {
         console.error("Analysis failed on client, applying fallback:", error);
-        return { isAllowed: true, score: 7, qualityMessage: "Фото приемлемо (анализ пропущен)" };
+        return { isAllowed: true, score: 0, qualityMessage: "Произошла ошибка. Всё пропало." };
     }
 };
 

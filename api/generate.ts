@@ -9,10 +9,22 @@ export const handler = async (event: any) => {
 
     try {
         const body = JSON.parse(event.body || '{}');
-        const { userId, userImage, options } = body;
+        
+        // 1. Достаем sign вместе с остальными переменными
+        const { userId, userImage, options, sign } = body;
 
-        if (!userId || !userImage || !options) {
-            return { statusCode: 400, body: JSON.stringify({ error: 'Missing required fields' }) };
+        // 2. Проверяем, что sign тоже пришел с фронтенда
+        if (!userId || !userImage || !options || !sign) {
+            return { statusCode: 400, body: JSON.stringify({ error: 'Missing required fields or sign' }) };
+        }
+
+        // 3. БЛОК ЖЕСТКОЙ ПРОВЕРКИ ПОДПИСИ
+        // (На сервере переменные окружения обычно без приставки VITE_)
+        const secretKey = process.env.MAGIC_SECRET || 'burservis2026'; 
+        const expectedHash = crypto.createHash('sha256').update(userId + secretKey).digest('hex');
+        
+        if (expectedHash !== sign) {
+            return { statusCode: 403, body: JSON.stringify({ error: 'Недействительная подпись запроса' }) };
         }
 
         // ==========================================

@@ -15,6 +15,7 @@ const fileToPart = async (file: File, maxSize?: number) => {
                 let width = img.width;
                 let height = img.height;
                 
+                // Пропорциональное сжатие
                 if (width > maxSize || height > maxSize) {
                     const ratio = Math.min(maxSize / width, maxSize / height);
                     width *= ratio;
@@ -28,7 +29,8 @@ const fileToPart = async (file: File, maxSize?: number) => {
                 if (!ctx) return reject(new Error("Canvas not supported"));
        
                 ctx.drawImage(img, 0, 0, width, height);
-                const resizedDataUrl = canvas.toDataURL('image/jpeg', 0.8);
+                // Качество 0.82 дает отличную картинку весом около 150-300 КБ, что идеально пролетает через прокси
+                const resizedDataUrl = canvas.toDataURL('image/jpeg', 0.82);
                 const { mimeType, data } = dataUrlToParts(resizedDataUrl);
                 resolve({ inlineData: { mimeType, data } });
             };
@@ -57,10 +59,11 @@ export interface PhotoAnalysisResult {
 }
 
 // ============================================================================
-// НОВАЯ ЛОГИКА АНАЛИЗА: Отправляем на наш сервер (api/analyze.ts)
+// НОВАЯ ЛОГИКА АНАЛИЗА: Отправляем на наш сервер
 // ============================================================================
 export const analyzePhoto = async (file: File): Promise<PhotoAnalysisResult> => {
     try {
+        // Сжимаем фото до 800px перед анализом (весит копейки, пролетает мгновенно)
         const userImagePart = await fileToPart(file, 800) as any;
         const base64Image = `data:${userImagePart.inlineData.mimeType};base64,${userImagePart.inlineData.data}`;
 
@@ -82,7 +85,7 @@ export const analyzePhoto = async (file: File): Promise<PhotoAnalysisResult> => 
 };
 
 // ============================================================================
-// ГЕНЕРАЦИЯ (Без изменений)
+// ГЕНЕРАЦИЯ
 // ============================================================================
 export const generateVirtualTryOnImage = async (
     userImage: File, 
@@ -119,7 +122,8 @@ export const generateVirtualTryOnImage = async (
             throw new Error("Пользователь не идентифицирован. Пожалуйста, обновите страницу и пройдите проверку заново.");
         }
 
-        const userImagePart = await fileToPart(userImage, 1024) as any;
+        // Сжимаем основное фото до 1200px перед генерацией. Идеальный баланс качества и скорости.
+        const userImagePart = await fileToPart(userImage, 1200) as any;
         const base64Image = `data:${userImagePart.inlineData.mimeType};base64,${userImagePart.inlineData.data}`;
 
         addLog("Отправка данных на защищенный сервер Netlify...");

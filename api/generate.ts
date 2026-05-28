@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import { GoogleGenAI } from "@google/genai";
 import * as fs from 'fs';
 

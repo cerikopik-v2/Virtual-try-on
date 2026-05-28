@@ -30,7 +30,7 @@ export const handler = async (event: any) => {
             if (generations >= 3) {
                 return { 
                     statusCode: 429, 
-                    body: JSON.stringify({ error: 'LIMIT_EXCEEDED' }) 
+                    body: JSON.stringify({ error: 'Лимит генераций по этой ссылке полностью исчерпан!' }) 
                 };
             }
         }

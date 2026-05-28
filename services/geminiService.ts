@@ -120,6 +120,7 @@ export const generateVirtualTryOnImage = async (
         addLog("Подготовка изображения пользователя...");
         
         const userId = localStorage.getItem('userId');
+        const userSign = localStorage.getItem('userSign');
         if (!userId) {
             throw new Error("Пользователь не идентифицирован. Пожалуйста, обновите страницу и пройдите проверку заново.");
         }
@@ -136,6 +137,7 @@ export const generateVirtualTryOnImage = async (
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 userId,
+                sign: userSign,
                 userImage: base64Image,
                 options: {
                     ...options,

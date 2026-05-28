@@ -137,7 +137,7 @@ const StartScreen: React.FC<Props> = ({ userImageUrl, onUpload, onProceed, onRes
            <h3 className="font-bold mb-2 text-gray-900">Рекомендации к фото:</h3>
            <ul className="list-disc pl-5 space-y-1 mb-4">
              <li>Портрет по пояс или крупнее. Не в полный рост!</li>
-             <li>Лицо четко видно, взгляд прямо (анфас), глаза открыты.</li>
+             <li>Лицо четко видно, взгляд прямо (лёгкий поворот головы допускается), глаза открыты.</li>
              <li>Один человек в кадре.</li>
              <li>Высокое качество, без размытия и сильных фильтров.</li>
            </ul>

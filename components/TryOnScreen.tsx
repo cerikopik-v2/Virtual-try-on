@@ -106,6 +106,7 @@ const TryOnScreen: React.FC<Props> = ({ userImageFile, userImageUrl, selection, 
          isStudio: selection.background === 'studio',
          isFlag: selection.accessories.includes('flag'),
          onLog: (msg: string) => setGenerationLogs(msg),
+         signal: abortControllerRef.current?.signal
        };
 
       const resultUrl = await generateVirtualTryOnImage(userImageFile, options);

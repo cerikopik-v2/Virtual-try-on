@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import IdentificationModal from './components/IdentificationModal';
 import StartScreen from './components/StartScreen';
 import TryOnScreen from './components/TryOnScreen';
@@ -31,6 +31,8 @@ const App: React.FC = () => {
   const [autoStartGeneration, setAutoStartGeneration] = useState(false);
   const [isLimitExceeded, setIsLimitExceeded] = useState(false);
   
+  const verifyStartedRef = useRef(false);
+  
   // App State
   const [userImageFile, setUserImageFile] = useState<File | null>(null);
   const [userImageUrl, setUserImageUrl] = useState<string | null>(null);
@@ -39,6 +41,9 @@ const App: React.FC = () => {
 
   // Проверка магической ссылки и лимитов
   useEffect(() => {
+    if (verifyStartedRef.current) return;
+    verifyStartedRef.current = true;
+
     const verifyAuthAndLimits = async () => {
       const queryParams = new URLSearchParams(window.location.search);
       const urlUid = queryParams.get('uid');

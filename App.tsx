@@ -83,7 +83,7 @@ const App: React.FC = () => {
       // ЭТАП 2: ВСЕГДА проверяем лимит, если юзер авторизован (неважно, новый вход или вернулся)
       if (isAuthValid && currentUserId) {
         try {
-          const verifyResponse = await fetch('/api/verify', {
+          const verifyResponse = await fetch('/.netlify/functions/verify', {
             method: 'POST',
             body: JSON.stringify({ userId: currentUserId })
           });

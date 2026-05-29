@@ -106,6 +106,7 @@ export const generateVirtualTryOnImage = async (
         isStudio?: boolean;
         isFlag?: boolean;
         onLog?: (msg: string) => void;
+        signal?: AbortSignal;
     }
 ): Promise<string> => {
     let logString = `Starting generation request at ${new Date().toISOString()}\n`;
@@ -135,13 +136,15 @@ export const generateVirtualTryOnImage = async (
         const response = await fetch('/.netlify/functions/generate', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
+            signal: options.signal,
             body: JSON.stringify({
                 userId,
                 sign: userSign,
                 userImage: base64Image,
                 options: {
                     ...options,
-                    onLog: undefined
+                    onLog: undefined,
+                    signal: undefined
                 }
             })
         });

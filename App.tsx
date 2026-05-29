@@ -11,10 +11,12 @@ import { DEFAULT_SELECTION } from './constants';
 type AppView = 'start' | 'tryon' | 'result';
 
 const App: React.FC = () => {
-  // 1. Проверяем, есть ли параметры в ссылке (чтобы показать загрузку, пока идет проверка)
+  // 1. Проверяем, есть ли параметры в ссылке ИЛИ юзер в памяти (чтобы показать загрузку, пока идет проверка)
   const [isCheckingLink, setIsCheckingLink] = useState(() => {
     const queryParams = new URLSearchParams(window.location.search);
-    return !!(queryParams.get('uid') && queryParams.get('sign'));
+    const hasParams = !!(queryParams.get('uid') && queryParams.get('sign'));
+    const hasStorage = !!localStorage.getItem('userId');
+    return hasParams || hasStorage; // Показываем спиннер в любом из этих случаев
   });
 
   // 2. Проверяем, авторизован ли пользователь (есть ли ID в памяти)
@@ -35,13 +37,17 @@ const App: React.FC = () => {
   const [selection, setSelection] = useState<SelectionState>(DEFAULT_SELECTION);
   const [resultImageUrl, setResultImageUrl] = useState<string | null>(null);
 
-  // Проверка магической ссылки
+  // Проверка магической ссылки и лимитов
   useEffect(() => {
-    const verifyMagicLink = async () => {
+    const verifyAuthAndLimits = async () => {
       const queryParams = new URLSearchParams(window.location.search);
       const urlUid = queryParams.get('uid');
       const urlSign = queryParams.get('sign');
+      
+      let currentUserId = localStorage.getItem('userId');
+      let isAuthValid = false;
 
+      // ЭТАП 1: Проверяем авторизацию (по ссылке ИЛИ по памяти)
       if (urlUid && urlSign) {
         const SECRET_WORD = 'BurServisSecret2026'; 
         const textToHash = urlUid + SECRET_WORD;
@@ -55,38 +61,46 @@ const App: React.FC = () => {
           if (hashHex === urlSign) {
             localStorage.setItem('userId', urlUid);
             localStorage.setItem('userSign', urlSign);
+            currentUserId = urlUid;
             setIsAuthorized(true);
-            // === ПРОВЕРКА ЛИМИТА В REDIS НА СТАРТЕ ===
-            try {
-              const verifyResponse = await fetch('/api/verify', {
-                method: 'POST',
-                body: JSON.stringify({ userId: urlUid })
-              });
-              
-              if (verifyResponse.ok) {
-                const data = await verifyResponse.json();
-                
-                // Если юзер исчерпал свои 3 попытки — включаем заглушку
-                if (data.generationsCount >= 3) {
-                  setIsLimitExceeded(true);
-                }
-              }
-            } catch (err) {
-              console.error('Ошибка проверки лимита:', err);
-            }
-            // === КОНЕЦ БЛОКА ПРОВЕРКИ ===
+            isAuthValid = true;
             window.history.replaceState({}, document.title, window.location.pathname);
           }
         } catch (error) {
           console.error('Ошибка проверки подписи:', error);
-        } finally {
-          // Выключаем статус загрузки, когда проверка закончена
-          setIsCheckingLink(false);
+        }
+      } 
+      // Если параметров нет, но юзер уже был авторизован ранее
+      else if (currentUserId) {
+        isAuthValid = true;
+      }
+
+      // ЭТАП 2: ВСЕГДА проверяем лимит, если юзер авторизован (неважно, новый вход или вернулся)
+      if (isAuthValid && currentUserId) {
+        try {
+          const verifyResponse = await fetch('/api/verify', {
+            method: 'POST',
+            body: JSON.stringify({ userId: currentUserId })
+          });
+          
+          if (verifyResponse.ok) {
+            const data = await verifyResponse.json();
+            
+            // Если юзер исчерпал свои 3 попытки — включаем заглушку
+            if (data.generationsCount >= 3) {
+              setIsLimitExceeded(true);
+            }
+          }
+        } catch (err) {
+          console.error('Ошибка проверки лимита:', err);
         }
       }
+
+      // ЭТАП 3: Выключаем статус загрузки, когда все проверки завершены
+      setIsCheckingLink(false);
     };
 
-    verifyMagicLink();
+    verifyAuthAndLimits();
   }, []);
   
   // Handlers

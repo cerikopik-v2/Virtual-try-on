@@ -131,7 +131,7 @@ export const generateVirtualTryOnImage = async (
         const base64Image = `data:${userImagePart.inlineData.mimeType};base64,${userImagePart.inlineData.data}`;
 
         addLog("Отправка данных на защищенный сервер Netlify... (Размер оптимизирован)");
-        addLog("Ожидание ответа от Gemini API (VPN больше не требуется)...");
+        addLog("Ожидание ответа от Gemini API (Ожидание)...");
 
         const response = await fetch('/.netlify/functions/generate', {
             method: 'POST',
@@ -149,14 +149,33 @@ export const generateVirtualTryOnImage = async (
             })
         });
 
-        const data = await response.json();
+        // 1. Сначала читаем ответ как обычный текст
+        const responseText = await response.text();
+        let data;
 
+        try {
+            // 2. Пробуем перевести текст в JSON-объект
+            data = JSON.parse(responseText);
+        } catch (parseError) {
+            // 3. Если парсинг сломался (Netlify вернул HTML страницу с ошибкой)
+            if (response.status === 504) {
+                throw new Error("Время ожидания истекло (504). Нейросеть генерирует слишком долго, попробуйте еще раз.");
+            } else if (response.status >= 500) {
+                throw new Error(`Внутренняя ошибка сервера (${response.status}). Попробуйте позже.`);
+            } else {
+                throw new Error(`Непредвиденный ответ от сервера (${response.status}).`);
+            }
+        }
+
+        // 4. Если JSON успешно распарсился, обрабатываем наши стандартные ошибки
         if (!response.ok) {
             if (data.error === 'LIMIT_EXCEEDED') {
                 throw new Error("LIMIT_EXCEEDED");
             }
-            throw new Error(data.error || `Ошибка сервера: ${response.status}`);
+            throw new Error(data.error || `Ошибка API: ${response.status}`);
         }
+
+        // --- КОНЕЦ НОВОЙ ЛОГИКИ ---
 
         addLog("Изображение успешно получено от сервера!");
         return data.image;

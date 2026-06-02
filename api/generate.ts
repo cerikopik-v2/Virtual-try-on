@@ -80,7 +80,7 @@ export const handler = async (event: any) => {
             project: projectId,
             location: 'global'
         });
-        const model = 'gemini-3.1-flash-image-preview';
+        const model = 'gemini-3.1-flash-image';
         // ==========================================
         // 3. ПОДГОТОВКА ЗАПРОСА (ОРИГИНАЛЬНАЯ ЛОГИКА)
         // ==========================================

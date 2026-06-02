@@ -40,7 +40,7 @@ export const handler = async (event: any) => {
             const limitData = await limitRes.json();
             const generations = parseInt(limitData.result || '0');
 
-            if (generations >= 3) {
+            if (generations >= 5) {
                 return { 
                     statusCode: 429, 
                     body: JSON.stringify({ error: 'LIMIT_EXCEEDED' }) 

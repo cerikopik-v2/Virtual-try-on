@@ -91,8 +91,8 @@ const App: React.FC = () => {
           if (verifyResponse.ok) {
             const data = await verifyResponse.json();
             
-            // Если юзер исчерпал свои 3 попытки — включаем заглушку
-            if (data.generationsCount >= 3) {
+            // Если юзер исчерпал свои 5 попытки — включаем заглушку
+            if (data.generationsCount >= 5) {
               setIsLimitExceeded(true);
             }
           }

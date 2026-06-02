@@ -219,7 +219,7 @@ Universal Application: Apply the lighting and angle to the subject regardless of
 SCENE & COMPOSITION
 Background: The color palette is strictly restrained: graphite, cool gray, deep navy blue, with soft gradients and a complete absence of saturated accents.
 Camera Angle (CRITICAL): Low-angle shot camera positioned slightly below the subject. This should make the subject look powerful and dominant.
-Framing: Medium close-up (focus on face and shoulders).
+Framing (CRITICAL): Medium close-up (focus on face and shoulders).
 
 WARDROBE & STYLING
 Attire: Apply the provided clothing and accessories.

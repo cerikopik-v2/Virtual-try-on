@@ -116,9 +116,9 @@ export const handler = async (event: any) => {
         if (options.clothesPrompt) {
             clothingInfo = options.clothesPrompt;
         } else if (options.clothesId === 'suit-male') {
-            clothingInfo = "Men's smart casual office suit, modern corporate attire, well-fitted";
+            clothingInfo = "Men's smart casual office suit, modern corporate attire";
         } else if (options.clothesId === 'suit-female') {
-            clothingInfo = "Women's smart casual office suit, modern corporate attire, well-fitted blazer with a crisp white shirt underneath";
+            clothingInfo = "Women's smart casual office suit, modern corporate attire";
         }
 
         if (options.clothesRef) {
@@ -237,11 +237,11 @@ Texture: Sharp focus on the face, natural skin texture. Background remains smoot
 
         } else if (options.bgId === 'studio2') {
             environmentAndPose = `ROLE & AESTHETIC:
-You are a world-class studio portrait photographer specializing in classic, artistic chiaroscuro techniques. Your task is to create a powerful, dramatic portrait in the style of classic Rembrandt lighting.
+You are a world-class studio portrait photographer specializing in classic, artistic chiaroscuro techniques. Your task is to create a portrait in the style of classic Rembrandt lighting.
 
 IDENTITY ANCHOR (CRITICAL – STRICT CONSTRAINT):
 Source: Use the person from the attached reference photo.
-Preserve: You must keep their exact facial features, face shape, skin tone, hairstyle, ethnicity, and micro-expressions from the [CHARACTER_REFERENCE] perfectly unchanged.
+Preserve: You must keep their exact head and body proportions, facial features, face shape, skin tone, hairstyle, ethnicity, and micro-expressions from the [CHARACTER_REFERENCE] perfectly unchanged.
 Universal Application: Apply the lighting and angle to the subject regardless of gender.
 
 SCENE & COMPOSITION

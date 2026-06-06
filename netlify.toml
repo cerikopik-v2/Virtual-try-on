@@ -1,8 +1,2 @@
 [build]
   functions = "api"
-
-[functions]
-  node_bundler = "esbuild"
-
-[functions."generate"]
-  timeout = 40
